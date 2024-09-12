@@ -18,7 +18,7 @@ const ENVIRONMENT = process.env.NODE_ENV || "";
 const bot = new Telegraf(BOT_TOKEN);
 const app = express();
 
-app.use(await bot.createWebhook({ domain: process.env.webhookDomain }));
+app.use(await bot.createWebhook({ domain: process.env.webhookDomain, drop_pending_updates: true }));
 
 app.get("/", (req, res) => {
     res.send("Bot started");
