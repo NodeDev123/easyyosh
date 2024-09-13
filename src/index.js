@@ -503,6 +503,8 @@ bot.on("callback_query", async (ctx) => {
                 }
             })
 
+            if (!task) return;
+
             availableTasks.push(task);
 
             let done = false;
