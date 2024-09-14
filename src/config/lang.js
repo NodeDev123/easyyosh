@@ -1,5 +1,5 @@
 function getLinks() {
-    const LINKS = ["https://t.me/Easyofficiel", "https://t.me/Easysponsors", "https://t.me/+F6v75GNlGwU5ZDU0", "https://t.me/+wILK-m-bcpRiMWQ0", "https://t.me/Easyretrait"];
+    const LINKS = ["https://t.me/Easyofficiel", "https://t.me/Easysponsors", "https://t.me/+gJH2sFB3MPw1OTlk", "https://t.me/+wILK-m-bcpRiMWQ0", "https://t.me/Easyretrait"];
 
     return LINKS.reduce((prev, link) => prev + `👉 ${link}\n\n`, "");
 }
