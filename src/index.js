@@ -57,6 +57,9 @@ const updateTaskBoard = async (ctx) => {
             processStatus: {
                 notIn: ["0", "1", "2"]
             }
+        },
+        orderBy: {
+            priority: "desc"
         }
     });
 
@@ -306,7 +309,7 @@ bot.on("message", async (ctx) => {
             await ctx.reply("Transfert moi un message du canal a utilise");
         }
 
-        if (forwardedMessageChannelId) {
+        if (forwardedMessageChannelId || text.startsWith("@")) {
             const channelAdd = await prisma.channels.findFirst({
                 where: {
                     processStatus: "1"
@@ -325,8 +328,8 @@ bot.on("message", async (ctx) => {
                         processStatus: "1"
                     },
                     data: {
-                        tgID: forwardedMessageChannelId.toString(),
-                        name: forwardedMessageChannelName.slice(0, 30) + "...",
+                        tgID: forwardedMessageChannelId ? forwardedMessageChannelId.toString() : text.slice(1),
+                        name: forwardedMessageChannelName ? forwardedMessageChannelName.slice(0, 30) + "..." : "Channel",
                         processStatus: "2"
                     }
                 })
@@ -348,7 +351,7 @@ bot.on("message", async (ctx) => {
                         processStatus: "1"
                     },
                     data: {
-                        chatId: forwardedMessageChannelId.toString(),
+                        chatId: forwardedMessageChannelId ? forwardedMessageChannelId.toString() : text.slice(1),
                         processStatus: "2"
                     }
                 })
