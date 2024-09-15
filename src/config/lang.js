@@ -1,7 +1,7 @@
 import prisma from "./prisma.js";
 
 async function getLinks() {
-    const CHANNELS = await prisma.channels.findMany({
+    let CHANNELS = await prisma.channels.findMany({
         where: {
             type: "main",
             processStatus: {
@@ -9,9 +9,15 @@ async function getLinks() {
             }
         },
         select: {
-            link: true
+            link: true,
+            withdrawalChannel: true
         }
     });
+
+    const nonWithdrawalChannel = CHANNELS.filter(channel => !channel.withdrawalChannel)
+    const withdrawalChannel = CHANNELS.filter(channel => channel.withdrawalChannel)
+
+    CHANNELS = [...nonWithdrawalChannel, ...withdrawalChannel]
 
     return CHANNELS.reduce((prev, channel) => prev + `👉 ${channel.link}\n\n`, "");
 }
