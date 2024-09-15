@@ -31,11 +31,14 @@ model User {
 model Task {
   id String @id
 
-  chatId      String
-  link        String
-  description String @default("")
-  priority    Int
-  reward      Int    @default(0)
+  chatId      String  @default("")
+  link        String  @default("")
+  description String  @default("")
+  priority    Int     @default(1)
+  reward      Int     @default(0)
+  joinRequest Boolean @default(false)
+
+  processStatus String @unique @default(cuid())
 }
 
 model UserTasks {
@@ -43,4 +46,17 @@ model UserTasks {
 
   taskId String
   userId String
+}
+
+model Channels {
+  id String @id @default(cuid())
+
+  tgID              String  @default("")
+  name              String  @default("Test")
+  link              String  @default("")
+  type              String  @default("main")
+  joinRequest       Boolean @default(false)
+  withdrawalChannel Boolean @default(false)
+
+  processStatus String @unique @default(cuid())
 }
