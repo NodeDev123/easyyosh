@@ -138,6 +138,8 @@ bot.use(async (ctx, next) => {
 })
 
 bot.start(async (ctx) => {
+    const welcomeMsg = await ctx.reply("Veuillez patienter… ⏳😊");
+
     const startPayload = ctx.payload;
     const language_code = ctx.from?.language_code === "fr" ? "fr" : "en";
 
@@ -185,7 +187,7 @@ bot.start(async (ctx) => {
     if (!isAccountValid) {
         const starterText = await lang[language_code].start(ctx);
 
-        await ctx.reply(starterText, {
+        await ctx.telegram.editMessageText(ctx.chat.id, welcomeMsg.message_id, undefined, starterText, {
             reply_markup: {
                 inline_keyboard: [
                     [{ text: "✅ Vérifiez", callback_data: `verify_${ctx.from.id}` }]
@@ -195,7 +197,7 @@ bot.start(async (ctx) => {
             link_preview_options: {
                 is_disabled: true
             }
-        });
+        })
 
         return;
     }
@@ -212,6 +214,8 @@ bot.start(async (ctx) => {
                 resize_keyboard: true
             }
         });
+
+        await ctx.deleteMessage(welcomeMsg.message_id);
     }
 
 });
@@ -258,107 +262,108 @@ bot.on("message", async (ctx) => {
         }
     })
 
-    const forwardedMessageChannelId = ctx.message?.forward_origin?.chat?.id;
-    const forwardedMessageChannelName = ctx.message?.forward_origin?.chat?.title;
+    if (isAdmin(ctx.from.id)) {
+        const forwardedMessageChannelId = ctx.message?.forward_origin?.chat?.id;
+        const forwardedMessageChannelName = ctx.message?.forward_origin?.chat?.title;
 
-    if (text?.startsWith("https://t.me/") && isAdmin(ctx.from.id)) {
-        const channelAdd = await prisma.channels.findFirst({
-            where: {
-                processStatus: "0"
-            }
-        })
-
-        const taskAdd = await prisma.task.findFirst({
-            where: {
-                processStatus: "0"
-            }
-        })
-
-        if (channelAdd) {
-            await prisma.channels.update({
+        if (text?.startsWith("https://t.me/")) {
+            const channelAdd = await prisma.channels.findFirst({
                 where: {
-                    processStatus: "0",
-                },
-                data: {
-                    link: text,
-                    processStatus: "1"
+                    processStatus: "0"
                 }
             })
+
+            const taskAdd = await prisma.task.findFirst({
+                where: {
+                    processStatus: "0"
+                }
+            })
+
+            if (channelAdd) {
+                await prisma.channels.update({
+                    where: {
+                        processStatus: "0",
+                    },
+                    data: {
+                        link: text,
+                        processStatus: "1"
+                    }
+                })
+            }
+
+            if (taskAdd) {
+                await prisma.task.update({
+                    where: {
+                        processStatus: "0",
+                    },
+                    data: {
+                        link: text,
+                        processStatus: "1"
+                    }
+                })
+            }
+
+            await ctx.reply("Transfert moi un message du canal a utilise");
         }
 
-        if (taskAdd) {
-            await prisma.task.update({
+        if (forwardedMessageChannelId) {
+            const channelAdd = await prisma.channels.findFirst({
                 where: {
-                    processStatus: "0",
-                },
-                data: {
-                    link: text,
                     processStatus: "1"
                 }
             })
-        }
 
-        await ctx.reply("Transfert moi un message du canal a utilise");
-    }
-
-    if (forwardedMessageChannelId && isAdmin(ctx.from.id)) {
-        const channelAdd = await prisma.channels.findFirst({
-            where: {
-                processStatus: "1"
-            }
-        })
-
-        const taskAdd = await prisma.task.findFirst({
-            where: {
-                processStatus: "1"
-            }
-        })
-
-        if (channelAdd) {
-            await prisma.channels.update({
+            const taskAdd = await prisma.task.findFirst({
                 where: {
                     processStatus: "1"
-                },
-                data: {
-                    tgID: forwardedMessageChannelId.toString(),
-                    name: forwardedMessageChannelName.slice(0, 30) + "...",
-                    processStatus: "2"
                 }
             })
 
-            await ctx.reply("Do you want to force channel", {
+            if (channelAdd) {
+                await prisma.channels.update({
+                    where: {
+                        processStatus: "1"
+                    },
+                    data: {
+                        tgID: forwardedMessageChannelId.toString(),
+                        name: forwardedMessageChannelName.slice(0, 30) + "...",
+                        processStatus: "2"
+                    }
+                })
+
+                await ctx.reply("Do you want to force channel", {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: "Yes", callback_data: "forced_yes" }, { text: "No", callback_data: "forced_no" }]
+                        ]
+                    }
+                })
+
+                return;
+            }
+
+            if (taskAdd) {
+                await prisma.task.update({
+                    where: {
+                        processStatus: "1"
+                    },
+                    data: {
+                        chatId: forwardedMessageChannelId.toString(),
+                        processStatus: "2"
+                    }
+                })
+            }
+
+            await ctx.reply("Plus qu'une dernier etape pour ajoute votre lien.Veillez repondre a la question\n\nVotre le lien est avec demande d'adhesion", {
                 reply_markup: {
                     inline_keyboard: [
-                        [{ text: "Yes", callback_data: "forced_yes" }, { text: "No", callback_data: "forced_no" }]
+                        [{ text: "Oui", callback_data: "link_yes" }, { text: "Non", callback_data: "link_no" }]
                     ]
                 }
-            })
+            });
 
             return;
         }
-
-        if (taskAdd) {
-            await prisma.task.update({
-                where: {
-                    processStatus: "1"
-                },
-                data: {
-                    chatId: forwardedMessageChannelId.toString(),
-                    processStatus: "2"
-                }
-            })
-        }
-
-        await ctx.reply("Plus qu'une dernier etape pour ajoute votre lien.Veillez repondre a la question\n\nVotre le lien est avec demande d'adhesion", {
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: "Oui", callback_data: "link_yes" }, { text: "Non", callback_data: "link_no" }]
-                ]
-            }
-        });
-
-
-        return
     }
 
     if (text === "Bonus 🎁") {
