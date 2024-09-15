@@ -248,7 +248,7 @@ bot.command("channel", async (ctx) => {
     console.log(ctx.message.reply_to_message.forward_origin.chat.id)
 })
 
-bot.on(message("text"), async (ctx) => {
+bot.on("message", async (ctx) => {
     const text = ctx.message.text;
     const language_code = ctx.from?.language_code === "fr" ? "fr" : "en";
 
@@ -258,8 +258,8 @@ bot.on(message("text"), async (ctx) => {
         }
     })
 
-    const forwardedMessageChannelId = ctx.message?.forward_origin?.chat.id;
-    const forwardedMessageChannelName = ctx.message?.forward_origin?.chat.title;
+    const forwardedMessageChannelId = ctx.message?.forward_origin?.chat?.id;
+    const forwardedMessageChannelName = ctx.message?.forward_origin?.chat?.title;
 
     if (text?.startsWith("https://t.me/") && isAdmin(ctx.from.id)) {
         const channelAdd = await prisma.channels.findFirst({
